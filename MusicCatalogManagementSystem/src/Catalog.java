@@ -14,6 +14,7 @@
  * Additionally, there are many methods for display which were all created for a specific purpose behind them.
  */
 import java.util.*;
+import java.util.regex.Pattern;
 
 class Catalog {
     //Fields
@@ -33,6 +34,13 @@ class Catalog {
         usedIds = new HashSet<>();
     }
 
+    public ArrayList<Song> getSongs() {
+        return songs;
+    }
+
+    public Set<Integer> getUsedIds() {
+        return usedIds;
+    }
 
     /*
     Name: displayAllSongs()
@@ -66,7 +74,7 @@ class Catalog {
      */
     public void askForDisplay() {
         Scanner userInput = new Scanner(System.in);
-        System.out.println("Do you want to filter songs by artist, album, or just display all songs? (artist/album/all)");
+        System.out.println("Do you want to filter songs by artist or album name? (artist/album)");
         String filterChoice = userInput.nextLine().trim().toLowerCase();
 
         if (filterChoice.equals("artist")) {
@@ -77,10 +85,8 @@ class Catalog {
             System.out.println("Enter album name:");
             String albumName = userInput.nextLine().trim();
             filterByAlbum(albumName);
-        } else if (filterChoice.equals("all")) {
-            displayUnfiltered();
         } else {
-            System.out.println("Invalid choice. Please choose 'artist', 'album', or 'all'.");
+            System.out.println("Invalid choice. Please choose 'artist' or 'album'.");
         }
     }//end method askForDisplay
 
@@ -139,7 +145,7 @@ class Catalog {
     Arguments: none
     Return Values: void
      */
-    private void displayUnfiltered() {
+    public void displayUnfiltered() {
         displayRankings(songs, "all", "");
     }//end method displayUnfiltered
 
@@ -329,7 +335,9 @@ class Catalog {
                 do {
                     try {
                         newScore = Float.parseFloat(myScanner.nextLine());
-                        if (newScore < 0.00 || newScore > 5.00) {
+                        Pattern validScore = Pattern.compile("\\d(\\.\\d{1,2})?");
+
+                        if (newScore < 0.00 || newScore > 5.00 || !validScore.matcher(String.valueOf(newScore)).matches()) {
                             System.out.println("Invalid score! Enter a value between 0.00 and 5.00:");
                         } else {
                             song.setSongScore(newScore);

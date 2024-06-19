@@ -12,12 +12,21 @@
  */
 class Song {
     //Fields
+    private int identification;
     private String title;
     private String album;
     private Artist artist;
-    private int identification;
     private String genre;
     private float songScore;
+
+    public Song(int identification, String title, String album, String artistName, String genre, float songScore) {
+        this.identification = identification;
+        this.title = title;
+        this.album = album;
+        this.artist = new Artist(artistName);
+        this.genre = genre;
+        this.songScore = songScore;
+    }
 
 
     /*

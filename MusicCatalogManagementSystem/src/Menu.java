@@ -59,7 +59,8 @@ public class Menu {
                             "[2] Remove a Song\n" +
                             "[3] Display all Songs\n" +
                             "[4] Update a Song's Score\n" +
-                            "[5] Exit\n" +
+                            "[5] Filter Songs\n" +
+                            "[6] Exit\n" +
                             "Enter your selection:"
             );
 
@@ -80,7 +81,7 @@ public class Menu {
                             System.out.println("Ain't Nobody Here But Us Chickens (Try adding a .txt file to the catalog!) ");
                             System.out.println();
                         } else
-                            catalog.askForDisplay();
+                            catalog.displayUnfiltered();
                         break;
                     case 4: // Remove Song from Existing Catalog
                         System.out.print("Enter the ID of the song's score you would like to update: ");
@@ -88,7 +89,14 @@ public class Menu {
                         catalog.updateUserScore(songToUpdate);
                         catalog.displayAllSongs();
                         break;
-                    case 5:
+                    case 5: // Filter Catalog
+                        if (songs.isEmpty()) {
+                            System.out.println("Ain't Nobody Here But Us Chickens (Try adding a .txt file to the catalog!) ");
+                            System.out.println();
+                        } else
+                            catalog.askForDisplay();
+                        break;
+                    case 6:
                         System.out.println("Exiting Program...");
                         System.exit(0);
                         break;
@@ -101,7 +109,7 @@ public class Menu {
                 input.nextLine();
             }
 
-        } while (myOptions != 5);
+        } while (myOptions != 6);
 
     }//end method createMenu
 
@@ -194,13 +202,8 @@ public class Menu {
                         }
 
                         if (title.length() <= 75 && album.length() <= 75 && artistName.length() <= 50 && genre.length() <= 50) {
-                            Song newSong = new Song();
-                            newSong.setTitle(title);
-                            newSong.setAlbum(album);
-                            Artist artist = new Artist(artistName);
-                            newSong.setArtist(artist);
-                            newSong.setGenre(genre);
-                            newSong.setSongScore(songScore);
+                            Song newSong = new Song(songId, title, album, artistName, genre, songScore);
+
 
                             songs.add(newSong);
                             catalog.addSong(newSong, songId);
