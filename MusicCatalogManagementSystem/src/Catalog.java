@@ -13,7 +13,10 @@
  * and of course Adding Songs.
  * Additionally, there are many methods for display which were all created for a specific purpose behind them.
  */
+import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.regex.Pattern;
 
 class Catalog {
     //Fields
@@ -33,23 +36,12 @@ class Catalog {
         usedIds = new HashSet<>();
     }
 
-
-    /*
-    Name: displayAllSongs()
-    Explanation:
-    Uses a for loop that Prints out all the song objects in the songs arrayList.
-    I wanted to give the display action a greater sense of identity because, as the assignment clearly states, after every action that the user takes,
-    the catalog should always be displayed. Thus, my thought process behind creating a distinction for displaying the catalog after every action
-    and the user choosing to display all songs in the catalog was to give a ranking system in the display all songs catalog, which is done based upon the score of each individual song.
-    Arguments: None
-    Return Values: Void
-     */
-    public void displayAllSongs() {
-        System.out.println("All Songs stored in Catalog:");
-        for (Song song : songs)
-            System.out.println(song);
-
-    }//end method displayAllSongs
+    public ArrayList<Song> getSongs() {
+        return songs;
+    }
+    public Set<Integer> getUsedIds() {
+        return usedIds;
+    }
 
 
     /*
@@ -65,23 +57,37 @@ class Catalog {
     Return Values: void
      */
     public void askForDisplay() {
-        Scanner userInput = new Scanner(System.in);
-        System.out.println("Do you want to filter songs by artist, album, or just display all songs? (artist/album/all)");
-        String filterChoice = userInput.nextLine().trim().toLowerCase();
 
-        if (filterChoice.equals("artist")) {
-            System.out.println("Enter artist name:");
-            String artistName = userInput.nextLine().trim();
-            filterByArtist(artistName);
-        } else if (filterChoice.equals("album")) {
-            System.out.println("Enter album name:");
-            String albumName = userInput.nextLine().trim();
-            filterByAlbum(albumName);
-        } else if (filterChoice.equals("all")) {
-            displayUnfiltered();
-        } else {
-            System.out.println("Invalid choice. Please choose 'artist', 'album', or 'all'.");
+        String[] options = {"Filter By Artist", "Filter By Album", "Cancel"};
+        int select = JOptionPane.showOptionDialog(null, "How would you like to filter the catalog?", "Music Catalog Management System", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+        switch (select) {
+            case 0: // Filter By Artist
+                String artistName = JOptionPane.showInputDialog("Enter the name of the artist: ");
+                if (artistName == null) {
+                    JOptionPane.showMessageDialog(null, "Returning to Menu.");
+                    break;
+                }
+                filterByArtist(artistName);
+                break;
+            case 1: //Filter By Album
+                String albumName = JOptionPane.showInputDialog("Enter the name of the album: ");
+                if (albumName == null) {
+                    JOptionPane.showMessageDialog(null, "Returning to Menu.");
+                    break;
+                }
+                filterByAlbum(albumName);
+                break;
+            case 2: //Cancel Function
+                JOptionPane.showMessageDialog(null, "Returning to Menu.");
+                break;
+            default: //Close Window
+                JOptionPane.showMessageDialog(null, "Returning to Menu.");
+                break;
+
+
+
         }
+
     }//end method askForDisplay
 
 
@@ -139,7 +145,7 @@ class Catalog {
     Arguments: none
     Return Values: void
      */
-    private void displayUnfiltered() {
+    public void displayUnfiltered() {
         displayRankings(songs, "all", "");
     }//end method displayUnfiltered
 
@@ -158,30 +164,75 @@ class Catalog {
     Return Values: void
      */
 
-
     private void displayRankings(ArrayList<Song> songs, String filterType, String filterName) {
         if (songs.isEmpty()) {
             if (filterType.equals("all")) {
-                System.out.println("Ain't Nobody Here But Us Chickens. (Try adding a .txt file to the catalog!)");
+                JOptionPane.showMessageDialog(null, "Ain't Nobody Here But Us Chickens. (Try adding a .txt file to the catalog!)", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
-                System.out.println("No songs found for the specified " + filterType + " '" + filterName + "'.");
+                JOptionPane.showMessageDialog(null, "No songs found for the specified " + filterType + " '" + filterName + "'.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         } else {
             Collections.sort(songs, (s1, s2) -> Float.compare(s2.getSongScore(), s1.getSongScore()));
 
-            System.out.println("Songs in the catalog:");
+            // Created StringBuilder to accumulate the contents of the Catalog and immediately starts an HTML table in order to customize the appearance of the Catalog
+            StringBuilder catalogTable = new StringBuilder("<html><body><table style='width: 150%; border-collapse: collapse;'>");
+            //Header Row
+            catalogTable.append("<tr>");
+            catalogTable.append("<th style='border: 1px solid black; padding: 10px; font-weight: 50; background-color: black; color: white; '>Rank</th>");
+            catalogTable.append("<th style='border: 1px solid black; padding: 10px; font-weight: 50; background-color: black; color: white;'>ID</th>");
+            catalogTable.append("<th style='border: 1px solid black; padding: 10px; font-weight: 50; background-color: black; color: white;'>Title</th>");
+            catalogTable.append("<th style='border: 1px solid black; padding: 10px; font-weight: 50; background-color: black; color: white;'>Album</th>");
+            catalogTable.append("<th style='border: 1px solid black; padding: 10px; font-weight: 50; background-color: black; color: white;'>Artist</th>");
+            catalogTable.append("<th style='border: 1px solid black; padding: 10px; font-weight: 50; background-color: black; color: white;'>Genre</th>");
+            catalogTable.append("<th style='border: 1px solid black; padding: 10px; font-weight: 50; background-color: black; color: white;'>Score</th>");
+            catalogTable.append("</tr>");
+
+
             int rank = 0;
             float previousScore = Float.MAX_VALUE;
 
-            for (Song song : songs) {
-                if (song.getSongScore() < previousScore) {
-                    // Update rank if the current song has a lower score
-                    rank++;
-                    previousScore = song.getSongScore();
+            // Limit the number of songs visible by chunks
+            //This is ultimately unnecessary for the scope of the MCMS, but it's nice to have a bit of scalability in case you ever wanted to have hundreds of songs instead of just a mere 20.
+            int displayAmount = 50;
+            int chunkCount = (int) Math.ceil((double) songs.size() / displayAmount);
+
+            for (int chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
+                catalogTable.append("<tr>");
+                for (int i = chunkIndex * displayAmount; i < Math.min((chunkIndex + 1) * displayAmount, songs.size()); i++) {
+                    Song song = songs.get(i);
+                    if (song.getSongScore() < previousScore) {
+                        rank++;
+                        previousScore = song.getSongScore();
+                    }
+
+                    // Since we're using a String Builder in order to display the content of the catalog, I decided that formatting it should also be here
+                    // I considered writing this in my toString for Song but, I ultimately decided that because this method is intended for the user experience, that here is where it should be formatted for the user
+                    // and the toString for Song would be a quick concise use of the object where needed for testing if required
+                    catalogTable.append("<td style='border: 1px solid black; padding: 7px; background-color: white; color: black; text-align: left;'>" + String.format("%06d", rank) + "</td>");
+                    catalogTable.append("<td style='border: 1px solid black; padding: 7px; background-color: white; color: black; text-align: center;'>" + song.getIdentification() + "</td>");
+                    catalogTable.append("<td style='border: 1px solid black; padding: 7px; background-color: white; color: black; text-align: center;'>" + song.getTitle() + "</td>");
+                    catalogTable.append("<td style='border: 1px solid black; padding: 7px; background-color: white; color: black; text-align: center;'>" + song.getAlbum() + "</td>");
+                    catalogTable.append("<td style='border: 1px solid black; padding: 7px; background-color: white; color: black; text-align: center;'>" + song.getArtist() + "</td>");
+                    catalogTable.append("<td style='border: 1px solid black; padding: 7px; background-color: white; color: black; text-align: center;'>" + song.getGenre() + "</td>");
+                    catalogTable.append("<td style='border: 1px solid black; padding: 7px; background-color: white; color: black; text-align: right;'>" + String.format("%.2f", song.getSongScore()) + "</td>");
+                    catalogTable.append("</tr>");
                 }
-                System.out.println("Rank #" + String.format("%06d", rank) + " | " + song);
             }
+
+            catalogTable.append("</table></body></html>");
+
+            // JLabel to display the content
+            JLabel toDisplay = new JLabel(catalogTable.toString());
+
+            // Put the content from the toDisplay into a JScrollPane scrollableContent
+            JScrollPane scrollableContent = new JScrollPane(toDisplay);
+            scrollableContent.setPreferredSize(new Dimension(1200, 700));
+
+            // Display the scrollable content in a JOptionPane
+            JOptionPane.showMessageDialog(null, scrollableContent, "Songs Catalog", JOptionPane.PLAIN_MESSAGE);
+
         }
+
     }//end method displayRankings
 
 
@@ -209,96 +260,119 @@ class Catalog {
      */
     public void removeSong() {
 
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter the attribute you want to remove the song by (ID or Title): ");
-        String attribute = scanner.nextLine().trim().toLowerCase();
+        Iterator<Song> iterator = songs.iterator();
+        boolean found = false;
 
-        if (attribute.equals("id")) {
-            System.out.print("Enter the ID of the song you want to remove: ");
-            if (scanner.hasNextInt()) {
-                int songId = scanner.nextInt();
-                scanner.nextLine();
+        String[] options = {"Remove By ID", "Remove By Title", "Cancel"};
+        int select = JOptionPane.showOptionDialog(null, "How would you like to remove a song from the catalog?", "Music Catalog Management System", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 
-                Iterator<Song> iterator = songs.iterator();
-                boolean found = false;
-
-                while (iterator.hasNext()) {
-                    Song song = iterator.next();
-                    if (song.getIdentification() == songId) {
-                        iterator.remove();
-                        found = true;
-                        usedIds.remove(songId);
-                        System.out.println("Song " + songId + " has been removed.");
+        switch (select) {
+            case 0: // Remove By ID
+                do {
+                    String removeSong = JOptionPane.showInputDialog("Enter the ID of the song you want to remove: ");
+                    if (removeSong == null) {
+                        JOptionPane.showMessageDialog(null, "Returning to Menu.");
                         break;
+                    } else {
+                        try {
+                            int songId = Integer.parseInt(removeSong);
+                            while (iterator.hasNext()) {
+                                Song song = iterator.next();
+                                if (song.getIdentification() == songId) {
+                                    iterator.remove();
+                                    found = true;
+                                    usedIds.remove(songId);
+                                    JOptionPane.showMessageDialog(null, "Song " + songId + " has been removed.");
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                JOptionPane.showMessageDialog(null, "Song with ID " + songId + " is not found in the catalog.", "Error", JOptionPane.ERROR_MESSAGE);
+                            }
+                            break;
+                        } catch (NumberFormatException e) {
+                            JOptionPane.showMessageDialog(null, "Error! Enter a valid ID.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
                     }
-                }
-
-                if (!found) {
-                    System.out.println("Song with ID " + songId + " is not found in the catalog.");
-                }
-            } else {
-                System.out.println("Invalid input! Enter a valid integer ID.");
-            }
-        } else if (attribute.equals("title")) {
-            System.out.print("Enter the title of the song you want to remove: ");
-            String title = scanner.nextLine().trim();
-
-            boolean found = false;
-            int count = 0;
-
-            for (Song song : songs) {
-                if (song.getTitle().equalsIgnoreCase(title)) {
-                    found = true;
-                    count++;
-                    System.out.println("The following song(s) in the catalog matches your criteria:");
-                    System.out.println(count + ". ID: " + song.getIdentification() + ", Title: " + song.getTitle() + ", Artist: " + song.getArtist());
-                }
-            }
-
-            if (found) {
-                if (count > 1) {
-                    System.out.print("Enter the ID of the song you want to remove: ");
-                    if (scanner.hasNextInt()) {
-                        int songId = scanner.nextInt();
-                        scanner.nextLine();
-
-                        Iterator<Song> iterator = songs.iterator();
-                        boolean removed = false;
-
-                        while (iterator.hasNext()) {
-                            Song song = iterator.next();
-                            if (song.getIdentification() == songId && song.getTitle().equalsIgnoreCase(title)) {
-                                iterator.remove();
-                                usedIds.remove(songId);
-                                System.out.println("Song " + songId + " has been removed.");
-                                removed = true;
-                                break;
+                } while (true);
+                break;
+            case 1: // Remove By Title
+                do {
+                    String removeSong = JOptionPane.showInputDialog("Enter the Title of the song you want to remove: ");
+                    if (removeSong == null) {
+                        JOptionPane.showMessageDialog(null, "Returning to Menu.");
+                        break;
+                    } else {
+                        StringBuilder foundSongs = new StringBuilder();
+                        int count = 0;
+                        for (Song song : songs) {
+                            if (song.getTitle().equalsIgnoreCase(removeSong)) {
+                                found = true;
+                                count++;
+                                foundSongs.append(count).append(", ID: ")
+                                        .append(song.getIdentification())
+                                        .append(", Title: ")
+                                        .append(song.getTitle())
+                                        .append(", Artist: ")
+                                        .append(song.getArtist())
+                                        .append("\n");
                             }
                         }
 
-                        if (!removed) {
-                            System.out.println("Song with ID " + songId + " and title " + title + " is not found in the catalog.");
-                        }
-                    } else {
-                        System.out.println("Invalid input! Enter a valid integer for ID!");
-                    }
-                } else {
-                    Iterator<Song> iterator = songs.iterator();
-                    while (iterator.hasNext()) {
-                        Song song = iterator.next();
-                        if (song.getTitle().equalsIgnoreCase(title)) {
-                            iterator.remove();
-                            usedIds.remove(song.getIdentification());
-                            System.out.println("Song '" + title + "' has been removed.");
+                        if (found) {
+                            if (count > 1) {
+                                do {
+                                    String removeSongById = JOptionPane.showInputDialog("The following songs in the catalog matches your criteria:\n" + foundSongs.toString() + "Enter the ID of the song you want to remove: ");
+                                    if (removeSongById == null) {
+                                        JOptionPane.showMessageDialog(null, "Returning to Menu.");
+                                        break;
+                                    }
+                                    try {
+                                        int songId = Integer.parseInt(removeSongById);
+                                        boolean removed = false;
+                                        while (iterator.hasNext()) {
+                                            Song song = iterator.next();
+                                            if (song.getIdentification() == songId && song.getTitle().equalsIgnoreCase(removeSong)) {
+                                                iterator.remove();
+                                                usedIds.remove(songId);
+                                                JOptionPane.showMessageDialog(null, "Song " + songId + " has been removed.");
+                                                removed = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!removed) {
+                                            JOptionPane.showMessageDialog(null, "Song with ID " + songId + " and title " + removeSong + " is not found in the catalog.", "Error", JOptionPane.ERROR_MESSAGE);
+                                        }
+                                        break;
+                                    } catch (NumberFormatException e) {
+                                        JOptionPane.showMessageDialog(null, "Error! Enter a valid ID.", "Error", JOptionPane.ERROR_MESSAGE);
+                                    }
+                                } while (true);
+                            } else {
+                                while (iterator.hasNext()) {
+                                    Song song = iterator.next();
+                                    if (song.getTitle().equalsIgnoreCase(removeSong)) {
+                                        iterator.remove();
+                                        usedIds.remove(song.getIdentification());
+                                        JOptionPane.showMessageDialog(null, "Song '" + removeSong + "' has been removed.");
+                                        break;
+                                    }
+                                }
+                            }
+                            break;
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Song with title '" + removeSong + "' is not found in the catalog.", "Error", JOptionPane.ERROR_MESSAGE);
                             break;
                         }
                     }
-                }
-            } else {
-                System.out.println("Song with title '" + title + "' is not found in the catalog.");
-            }
-        } else {
-            System.out.println("Invalid selection. Please enter 'ID' or 'Title'.");
+                } while (true);
+                break;
+            case 2: // Cancel Function
+                JOptionPane.showMessageDialog(null, "Returning to Menu.");
+                break;
+            default: //Clicked X on Window
+                JOptionPane.showMessageDialog(null, "Returning to Menu.");
+                break;
         }
     }//end method removeSong
 
@@ -318,33 +392,42 @@ class Catalog {
     public void updateUserScore(int songId) {
         Iterator<Song> iterator = songs.iterator();
         boolean found = false;
-        Scanner myScanner = new Scanner(System.in);
+
+
 
         while (iterator.hasNext()) {
             Song song = iterator.next();
             if (song.getIdentification() == songId) {
                 found = true;
-                System.out.println("Enter the new score for song " + songId + " (between 0.00 and 5.00):");
-                float newScore;
+
                 do {
+                    String inputScore = JOptionPane.showInputDialog(null, "Enter the new score for song " + songId + " (between 0.00 and 5.00):");
+                    if (inputScore == null) {
+                        JOptionPane.showMessageDialog(null, "Returning to Menu.");
+                        break;
+                    }
                     try {
-                        newScore = Float.parseFloat(myScanner.nextLine());
-                        if (newScore < 0.00 || newScore > 5.00) {
-                            System.out.println("Invalid score! Enter a value between 0.00 and 5.00:");
+                        float newScore = Float.parseFloat(inputScore);
+                        Pattern validScore = Pattern.compile("\\d(\\.\\d{1,2})?");
+
+                        if (newScore < 0.00 || newScore > 5.00 || !validScore.matcher(String.valueOf(newScore)).matches()) {
+                            JOptionPane.showMessageDialog(null, "Invalid score! Enter a value between 0.00 and 5.00!", "Error", JOptionPane.ERROR_MESSAGE);
                         } else {
                             song.setSongScore(newScore);
-                            System.out.println("Song " + songId + " has been updated with a new score of: " + newScore);
+                            JOptionPane.showMessageDialog(null, "Song " + songId + " has been updated with a new score of: " + newScore);
                             break;
                         }
                     } catch (NumberFormatException e) {
-                        System.out.println("Invalid format! Enter a valid float value:");
+                        JOptionPane.showMessageDialog(null, "Invalid format! Enter a valid float value!", "Error", JOptionPane.ERROR_MESSAGE);
+
                     }
                 } while (true);
             }
         }
 
         if (!found) {
-            System.out.println("Song with ID " + songId + " is not found in the catalog.");
+            JOptionPane.showMessageDialog(null, "Song with ID " + songId + " is not found in the catalog.", "Error", JOptionPane.ERROR_MESSAGE);
+
         }
 
     }//end method updateUserScore
@@ -363,7 +446,6 @@ class Catalog {
         song.setIdentification(newID);
         songs.add(song);
         usedIds.add(newID);
-        System.out.println("Song added successfully with ID " + newID + ".");
     }//end method addSong
 
 

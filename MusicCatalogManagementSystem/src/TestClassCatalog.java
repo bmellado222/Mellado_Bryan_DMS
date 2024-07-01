@@ -1,3 +1,5 @@
+import javax.swing.*;
+
 /********************************************
  * Name: 	  Bryan Mellado	  	         	*
  * Course: 	  CEN 3024C	     	         	*
@@ -21,6 +23,10 @@
  * displays and ranks each song on the list based on each song's individual score, and,
  * making sure that the program accepts only comma-delimited test files that possess only six attributes when adding songs. All of which the user interacts with
  * at some point via the menu
+ *
+ *
+ * AI Assistance:
+ *  Line 159
  */
 public class TestClassCatalog {
 
@@ -32,7 +38,10 @@ public class TestClassCatalog {
     Return Values: Void
      */
     public static void main(String[] args) {
-        Menu myMenu = new Menu();
+        //Menu myMenu = new Menu();
+        SwingUtilities.invokeLater(() -> {
+            Menu app = new Menu();
+        });
     }// end method Main
 
 
