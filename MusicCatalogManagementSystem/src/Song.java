@@ -12,12 +12,21 @@
  */
 class Song {
     //Fields
+    private int identification;
     private String title;
     private String album;
     private Artist artist;
-    private int identification;
     private String genre;
     private float songScore;
+
+    public Song(int identification, String title, String album, String artistName, String genre, float songScore) {
+        this.identification = identification;
+        this.title = title;
+        this.album = album;
+        this.artist = new Artist(artistName);
+        this.genre = genre;
+        this.songScore = songScore;
+    }
 
 
     /*
@@ -158,20 +167,12 @@ class Song {
     Arguments: none
     Return Values: String
      */
-
     public String toString() {
-        String idFormat = "ID: %-11s";
-        String titleFormat = "Title: %-55s"; // This is supposed to be accounting for 75 characters total but, I made it smaller for demonstration purposes, normally this would be 76
-        String albumFormat = "Album: %-55s"; // This is supposed to be accounting for 75 characters total but, I made it smaller for demonstration purposes, normally this would be 76
-        String artistFormat = "Artist: %-44s"; // This is supposed to be accounting for 50 characters total but, I made it smaller for demonstration purposes, normally this would be 51
-        String genreFormat = "Genre: %-44s"; // This is supposed to be accounting for 50 characters total but, I made it smaller for demonstration purposes, normally this would be 51
-        String scoreFormat = "Score: %6.2f";
 
-        String result = String.format(idFormat + " | " + titleFormat + " | " + albumFormat + " | " +
-                        artistFormat + " | " + genreFormat + " | " + scoreFormat,
-                identification, title, album, artist.toString(), genre, songScore);
-        return result;
-    }//end method toString
+        return String.format("Song: [ID=%s, Title=%s, Album=%s, Artist=%s, Genre=%s, Score=%.2f]",
+                identification, title, album, artist, genre, songScore);
+    }
+//end method toString
 
 
 
