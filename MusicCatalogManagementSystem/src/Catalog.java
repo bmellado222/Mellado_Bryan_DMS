@@ -15,13 +15,19 @@
  */
 import javax.swing.*;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.regex.Pattern;
 
 class Catalog {
     //Fields
     private ArrayList<Song> songs;
-    private Set<Integer> usedIds;
+    // There is no longer any point to anything having to do with
+    // usedIds because validating objects is no longer needed since all objects are obtained from a database that already
+    // possesses all necessary constraints, the only thing my program is doing at this point is just retrieving them.
+    //private Set<Integer> usedIds;
 
 
     /*
@@ -33,15 +39,18 @@ class Catalog {
      */
     public Catalog() {
         songs = new ArrayList<>();
-        usedIds = new HashSet<>();
+        //usedIds = new HashSet<>();
     }
 
     public ArrayList<Song> getSongs() {
         return songs;
     }
+
+    /*
     public Set<Integer> getUsedIds() {
         return usedIds;
     }
+     */
 
 
     /*
@@ -258,7 +267,7 @@ class Catalog {
     Arguments: none
     Return Values: Void
      */
-    public void removeSong() {
+    public void removeSong(Connection connection) {
 
         Iterator<Song> iterator = songs.iterator();
         boolean found = false;
@@ -281,7 +290,19 @@ class Catalog {
                                 if (song.getIdentification() == songId) {
                                     iterator.remove();
                                     found = true;
-                                    usedIds.remove(songId);
+                                    //usedIds.remove(songId);
+                                    try {
+                                        String deleteQuery = "DELETE FROM music_catalog.Songs WHERE songId = ?";
+                                        PreparedStatement preassembled = connection.prepareStatement(deleteQuery);
+                                        preassembled.setInt(1, songId);
+                                        preassembled.executeUpdate();
+
+                                        connection.commit();
+                                    } catch (SQLException e) {
+                                        // This is written here because Java would get upset otherwise but,
+                                        // by the time the user validates their input to actually get here there is no need to actually have a try catch for this.
+                                        e.printStackTrace();
+                                    }
                                     JOptionPane.showMessageDialog(null, "Song " + songId + " has been removed.");
                                     break;
                                 }
@@ -334,7 +355,19 @@ class Catalog {
                                             Song song = iterator.next();
                                             if (song.getIdentification() == songId && song.getTitle().equalsIgnoreCase(removeSong)) {
                                                 iterator.remove();
-                                                usedIds.remove(songId);
+                                                //usedIds.remove(songId);
+                                                try {
+                                                    String deleteQuery = "DELETE FROM music_catalog.Songs WHERE songId = ?";
+                                                    PreparedStatement preassembled = connection.prepareStatement(deleteQuery);
+                                                    preassembled.setInt(1, songId);
+                                                    preassembled.executeUpdate();
+
+                                                    connection.commit();
+                                                } catch (SQLException e) {
+                                                    // This is written here because Java would get upset otherwise but,
+                                                    // by the time the user validates their input to actually get here there is no need to actually have a try catch for this.
+                                                    e.printStackTrace();
+                                                }
                                                 JOptionPane.showMessageDialog(null, "Song " + songId + " has been removed.");
                                                 removed = true;
                                                 break;
@@ -353,7 +386,19 @@ class Catalog {
                                     Song song = iterator.next();
                                     if (song.getTitle().equalsIgnoreCase(removeSong)) {
                                         iterator.remove();
-                                        usedIds.remove(song.getIdentification());
+                                        //usedIds.remove(song.getIdentification());
+                                        try {
+                                            String deleteQuery = "DELETE FROM music_catalog.Songs WHERE songTitle = ?";
+                                            PreparedStatement preassembled = connection.prepareStatement(deleteQuery);
+                                            preassembled.setString(1, removeSong);
+                                            preassembled.executeUpdate();
+
+                                            connection.commit();
+                                        } catch (SQLException e) {
+                                            // This is written here because Java would get upset otherwise but,
+                                            // by the time the user validates their input to actually get here there is no need to actually have a try catch for this.
+                                            e.printStackTrace();
+                                        }
                                         JOptionPane.showMessageDialog(null, "Song '" + removeSong + "' has been removed.");
                                         break;
                                     }
@@ -389,7 +434,7 @@ class Catalog {
     Return Values: void
 
      */
-    public void updateUserScore(int songId) {
+    public void updateUserScore(int songId, Connection connection) {
         Iterator<Song> iterator = songs.iterator();
         boolean found = false;
 
@@ -414,6 +459,19 @@ class Catalog {
                             JOptionPane.showMessageDialog(null, "Invalid score! Enter a value between 0.00 and 5.00!", "Error", JOptionPane.ERROR_MESSAGE);
                         } else {
                             song.setSongScore(newScore);
+                            try {
+                                String query = "UPDATE music_catalog.Songs SET songScore = ? WHERE songId = ?";
+                                PreparedStatement preassembled = connection.prepareStatement(query);
+                                preassembled.setFloat(1, newScore);
+                                preassembled.setInt(2, songId);
+                                preassembled.executeUpdate();
+
+                                connection.commit();
+                            } catch (SQLException e) {
+                                e.printStackTrace();
+                                // This is written here because Java would get upset otherwise but,
+                                // by the time the user validates their input to actually get here there is no need to actually have a try catch for this.
+                            }
                             JOptionPane.showMessageDialog(null, "Song " + songId + " has been updated with a new score of: " + newScore);
                             break;
                         }
@@ -442,10 +500,10 @@ class Catalog {
     Arguments: Object song and wrapper class Integer
     Return Values: Void
      */
-    public void addSong(Song song, Integer newID) {
-        song.setIdentification(newID);
+    public void addSong(Song song) {
+        //song.setIdentification(newID);
         songs.add(song);
-        usedIds.add(newID);
+        //usedIds.add(newID);
     }//end method addSong
 
 
@@ -456,10 +514,14 @@ class Catalog {
     Arguments: int
     Return Values: boolean
      */
+
+    /*
     public boolean checkNewId(int id) {
         return !usedIds.contains(id);
     }
 
+
+     */
 
 
 }//end class Catalog

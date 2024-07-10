@@ -10,20 +10,20 @@
  *
  */
 import java.awt.*;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.sql.*;
 import java.util.ArrayList;
-import java.util.Scanner;
 import javax.swing.*;
 
 
 public class Menu {
     //Fields
-    private Scanner input = new Scanner(System.in);
     private ArrayList<Song> songs;
     private Catalog catalog;
     private JFrame preventUserExit;
+    private boolean establishedConnection = false;
+    private Connection connection;
+
+
 
 
 
@@ -39,8 +39,27 @@ public class Menu {
     Return Values: Not even Void
      */
     public Menu() {
+        /*
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            String databaseUser = "root";
+            String databasePassword = "FeetLeetNeet@1991";
+            //String query = "select * from Songs";
+            String databaseURL = "jdbc:mysql://localhost:3306/music_catalog";
+            Connection connection = DriverManager.getConnection(databaseURL, databaseUser, databasePassword);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Failed to connect to database. Exiting program.", "Error", JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
+        }
+         */
+
         songs = new ArrayList<>();
         catalog = new Catalog();
+
+
+
         preventUserExit = new JFrame("Music Catalog Management System");
         preventUserExit.getContentPane().setBackground(Color.DARK_GRAY);
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -48,6 +67,8 @@ public class Menu {
         preventUserExit.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         preventUserExit.setLocationRelativeTo(null);
         preventUserExit.setVisible(true);
+
+
         createMenu();
     }//no arg Constructor
 
@@ -66,17 +87,17 @@ public class Menu {
     public void createMenu() {
         int select;
         JLabel welcomeText = new JLabel("Welcome to my Music Catalog Management System! Please select an action from the menu below:");
-
         welcomeText.setHorizontalAlignment(SwingConstants.CENTER);
+
         do {
-            String[] options = {
-                    "Add New Songs",
-                    "Remove a Song",
-                    "Display all Songs",
-                    "Update a Song's Score",
-                    "Filter Songs",
-                    "Exit"
-            };
+            String[] options = new String[]{
+                        "Add New Songs",
+                        "Remove a Song",
+                        "Display all Songs",
+                        "Update a Song's Score",
+                        "Filter Songs",
+                        "Exit"
+                };
 
             select = JOptionPane.showOptionDialog(
                     preventUserExit,
@@ -86,53 +107,78 @@ public class Menu {
                     JOptionPane.PLAIN_MESSAGE,
                     null,
                     options,
-                    options[1]
+                    options[0]
             );
 
-                    switch (select) {
-                        case 0: // Add Song to Existing Catalog
-                            addSongsFromFile();
-                            break;
-                        case 1: // Remove Song from Existing Catalog
-                            catalog.removeSong();
-                            break;
-                        case 2: // Display Catalog
-                            if (songs.isEmpty()) {
-                                JOptionPane.showMessageDialog(preventUserExit, "Ain't Nobody Here But Us Chickens (Try adding a .txt file to the catalog!)", "Error", JOptionPane.ERROR_MESSAGE);
-                            } else {
-                                catalog.displayUnfiltered();
-                            }
-                            break;
-                        case 3: // Update a Song's Score
-                            try{
-                                String songIdInput = JOptionPane.showInputDialog(preventUserExit, "Enter the ID of the song's score you would like to update:");
-                                if (songIdInput != null) {
-                                    int songToUpdate = Integer.parseInt(songIdInput.trim());
-                                    catalog.updateUserScore(songToUpdate);
-                                } else {
-                                    JOptionPane.showMessageDialog(preventUserExit, "Returning to Menu.");
-                                }
-                                break;
-                            }catch(NumberFormatException e){
-                                JOptionPane.showMessageDialog(preventUserExit, "Please enter a valid integer for song ID.", "Error", JOptionPane.ERROR_MESSAGE);
-                            }
-                            break;
-                        case 4: // Filter Catalog
-                            if (songs.isEmpty()) {
-                                JOptionPane.showMessageDialog(preventUserExit, "Ain't Nobody Here But Us Chickens (Try adding a .txt file to the catalog!)", "Error", JOptionPane.ERROR_MESSAGE);
-                            } else {
-                                catalog.askForDisplay();
-                            }
-                            break;
-                        case 5: // Exit Catalog
-                            JOptionPane.showMessageDialog(preventUserExit, "Exiting Program...", "Exit Program", JOptionPane.WARNING_MESSAGE);
-                            System.exit(0);
-                            break;
-                        default: //Clicked X on the Window
-                            JOptionPane.showMessageDialog(preventUserExit, "Exiting Program...", "Exit Program", JOptionPane.WARNING_MESSAGE);
-                            System.exit(0);
-                            break;
+            switch (select) {
+                case 0: // Connect to Database
+                    if (establishedConnection) {
+                        JOptionPane.showMessageDialog(preventUserExit, "You are already connected to a database!", "Info", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        String warningMessage = "Attention! Make sure you have done the following steps:\n" +
+                                "1. Make sure you have imported the provided dump File to a MySQL Server. (typically through a MySQL Workbench or command line)\n" +
+                                "2. Make sure you have access to the MySQL Server you have imported the database to. (You will need the URL, username, and password. Also make sure it's online)\n" +
+                                "3. Make sure that this project still possesses the mysql-connector in its external libraries. (It should but, just in case it doesn't because of export mishaps)";
+
+                        JOptionPane.showMessageDialog(null, warningMessage, "Warning", JOptionPane.WARNING_MESSAGE);
+                        accessDatabase();
                     }
+                    break;
+                case 1: // Remove Song from Existing Catalog
+                    if (establishedConnection) {
+                        catalog.removeSong(connection);
+                    } else {
+                        JOptionPane.showMessageDialog(preventUserExit, "Please connect to a database first.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                    break;
+                case 2: // Display Catalog
+                    if (establishedConnection) {
+                        if (songs.isEmpty()) {
+                            JOptionPane.showMessageDialog(preventUserExit, "Ain't Nobody Here But Us Chickens (Try adding a .txt file to the catalog!)", "Error", JOptionPane.ERROR_MESSAGE);
+                        } else {
+                            catalog.displayUnfiltered();
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(preventUserExit, "Please connect to a database first.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                    break;
+                case 3: // Update a Song's Score
+                    if (establishedConnection) {
+                        try {
+                            String songIdInput = JOptionPane.showInputDialog(preventUserExit, "Enter the ID of the song's score you would like to update:");
+                            if (songIdInput != null) {
+                                int songToUpdate = Integer.parseInt(songIdInput.trim());
+                                catalog.updateUserScore(songToUpdate, connection);
+                            } else {
+                                JOptionPane.showMessageDialog(preventUserExit, "Returning to Menu.");
+                            }
+                        } catch (NumberFormatException e) {
+                            JOptionPane.showMessageDialog(preventUserExit, "Please enter a valid integer for song ID.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(preventUserExit, "Please connect to a database first.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                    break;
+                case 4: // Filter Catalog
+                    if (establishedConnection) {
+                        if (songs.isEmpty()) {
+                            JOptionPane.showMessageDialog(preventUserExit, "Ain't Nobody Here But Us Chickens (Try adding a .txt file to the catalog!)", "Error", JOptionPane.ERROR_MESSAGE);
+                        } else {
+                            catalog.askForDisplay();
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(preventUserExit, "Please connect to a database first.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                    break;
+                case 5: // Exit Catalog
+                    JOptionPane.showMessageDialog(preventUserExit, "Exiting Program...", "Exit Program", JOptionPane.WARNING_MESSAGE);
+                    System.exit(0);
+                    break;
+                default: // Clicked X on the Window
+                    JOptionPane.showMessageDialog(preventUserExit, "Exiting Program...", "Exit Program", JOptionPane.WARNING_MESSAGE);
+                    System.exit(0);
+                    break;
+            }
 
         } while (select != 5);
 
@@ -173,105 +219,86 @@ public class Menu {
 
 
      */
-    private void addSongsFromFile() {
-        String input = JOptionPane.showInputDialog("Enter the path of the text file: ");
-        if (input == null) {
+    public void accessDatabase() {
+        initialize();
+        String jdbcURL = JOptionPane.showInputDialog("Enter the JDBC URL: (Ex. jdbc:mysql://[host]:[port]/[database_name] )");
+        if (jdbcURL == null) {
             JOptionPane.showMessageDialog(null, "Returning to Menu.");
-        } else {
-            StringBuilder fileResults = new StringBuilder();
-
-            try (BufferedReader br = new BufferedReader(new FileReader(input))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    if (line.contains("¦")) {
-                        fileResults.append("An Error has occurred! Line contains invalid character '¦'. Skipping line: ").append(line).append("\n");
-                        continue;
-                    }
-
-                    line = line.trim();
-                    if (line.isEmpty()) continue;
-
-                    // The program will split on commas, excluding those within double quotes
-                    String[] parts = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
-                    if (parts.length == 6) {
-                        for (int i = 0; i < 3; i++) {
-                            parts[i] = parts[i].replace('¦', ',').trim();
-                        }
-                        int songId;
-                        try {
-                            songId = Integer.parseInt(parts[0].trim());
-                            if (songId < 0 || songId > 9999999999L) {
-                                fileResults.append("An Error has occurred! Song ID must be between 1-10 Digits and can't be negative. Skipping line: ").append(line).append("\n");
-                                continue;
-                            }
-                        } catch (NumberFormatException e) {
-                            fileResults.append("An Error has occurred! Invalid song ID format. Skipping line: ").append(line).append("\n");
-                            continue;
-                        }
-
-                        if (catalog.checkNewId(songId)) {
-                            String title = removeQuotes(parts[1].trim());
-                            String album = removeQuotes(parts[2].trim());
-                            String artistName = removeQuotes(parts[3].trim());
-                            String genre = removeQuotes(parts[4].trim());
-
-
-                            float songScore;
-                            try {
-                                songScore = Float.parseFloat(parts[5].trim());
-                                if (songScore < 0 || songScore > 5) {
-                                    fileResults.append("An Error has occurred! Song score must be between 0.00 and 5.00. Skipping line: ").append(line).append("\n");
-                                    continue;
-                                }
-                            } catch (NumberFormatException e) {
-                                fileResults.append("An Error has occurred! Invalid song score number format. Skipping line: ").append(line).append("\n");
-                                continue;
-                            }
-
-                            if (title.length() <= 75 && album.length() <= 75 && artistName.length() <= 50 && genre.length() <= 50) {
-                                Song newSong = new Song(songId, title, album, artistName, genre, songScore);
-
-
-                                songs.add(newSong);
-                                catalog.addSong(newSong, songId);
-                                fileResults.append("Successfully added song with ID: ").append(songId).append(" (Title of Song: ").append(title).append(")\n");
-
-                            } else {
-                                fileResults.append("An Error has occurred! Title, album, ID, or artist exceeds maximum character limit. Skipping line: " + line).append(line).append("\n");
-
-                            }
-                        } else {
-                            fileResults.append("An Error has occurred! Song with ID ").append(songId).append(" already exists in the catalog.\n");
-
-                        }
-                    } else {
-                        fileResults.append("An Error has occurred! Invalid line format. Skipping line: ").append(line).append("\n");
-                    }
-                }
-                fileResults.append("All lines in the file have been processed. All valid songs have been created and added to the catalog.");
-                JOptionPane.showMessageDialog(null, fileResults.toString(), "File Processing Results", JOptionPane.INFORMATION_MESSAGE);
-
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(null, "An Error has occurred! Error from file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
+            return;
         }
-    }//end method addSongsFromFile
+        jdbcURL = jdbcURL.trim();
+
+        String username = JOptionPane.showInputDialog("Enter your MySQL username: (Ex. root )");
+        if (username == null) {
+            JOptionPane.showMessageDialog(null, "Returning to Menu.");
+            return;
+        }
+        username = username.trim();
 
 
-    /*
-    Name: removeQuotes
-    Explanation: Double quotes surrounding strings are removed, if applicable, then, returned.
-    Also, the program does this one time on purpose because some song title, album, or artist names may have "" in them. For instance, the album: "Heroes" by David Bowie.
-    Arguments: String str
-    Return Values: String
-     */
-    private String removeQuotes(String str) {
+        String password = JOptionPane.showInputDialog("Enter your MySQL password:");
+        if (password == null) {
+            JOptionPane.showMessageDialog(null, "Returning to Menu.");
+            return;
+        }
+        password = password.trim();
 
-        if (str.startsWith("\"") && str.endsWith("\""))
-            return str.substring(1, str.length() - 1);
-        return str;
-    }//end method removeQuotes
+        try {
+            connection = DriverManager.getConnection(jdbcURL, username, password);
+            JOptionPane.showMessageDialog(null, "Database connection successful.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            establishedConnection = true; //Very Important Boolean, Once Connection is successful every other Menu Option becomes usable.
 
+            ArrayList<Song> fetchedSongs = fetchSongs();
 
+            // Add fetched songs to your ArrayList & Catalog
+            for (Song song : fetchedSongs) {
+                songs.add(song);
+                catalog.addSong(song);
+            }
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Failed to connect to database: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private ArrayList<Song> fetchSongs() {
+        ArrayList<Song> songs = new ArrayList<>();
+
+        String query = "SELECT * FROM Songs";
+
+        try (Statement statement = connection.createStatement();
+             ResultSet result = statement.executeQuery(query)) {
+
+            while (result.next()) {
+                int songId = result.getInt("songId");
+                String title = result.getString("songTitle");
+                String album = result.getString("songAlbum");
+                String artistName = result.getString("songArtist");
+                String genre = result.getString("songGenre");
+                float songScore = result.getFloat("songScore");
+
+                // Create a new Song object & Add to ArrayList
+                // The reason we are still using objects and ArrayLists despite having a sql database is because I can still use all my validation and preferences for display.
+                // Effectively this makes it so that very little of my code needs to change while still achieving all the back-end requirements set out by 3rd phase of the project.
+                Song newSong = new Song(songId, title, album, artistName, genre, songScore);
+                songs.add(newSong);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return songs;
+    }
+
+    public void initialize() {
+        try {
+            // Load JDBC driver
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            JOptionPane.showMessageDialog(null, "MySQL JDBC Driver not found. Exiting program.", "Error", JOptionPane.ERROR_MESSAGE);
+            // Handle the error, If you don't have JDBC driver the program can't  work.
+            System.exit(1); // Exit application if driver not found
+        }
+    }
 
 }//end class Menu
