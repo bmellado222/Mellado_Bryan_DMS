@@ -26,7 +26,7 @@ import javax.swing.*;
  *
  *
  * AI Assistance:
- *  Line 159
+ *  Line 159, This is no longer the case because addSongFromFile was changed in its entirety.
  */
 public class TestClassCatalog {
 
@@ -38,10 +38,7 @@ public class TestClassCatalog {
     Return Values: Void
      */
     public static void main(String[] args) {
-        //Menu myMenu = new Menu();
-        SwingUtilities.invokeLater(() -> {
-            Menu app = new Menu();
-        });
+        Menu myMenu = new Menu();
     }// end method Main
 
 
