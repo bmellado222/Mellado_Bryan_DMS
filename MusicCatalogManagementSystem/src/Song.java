@@ -1,16 +1,11 @@
-/********************************************
- * Name: 	  Bryan Mellado	  	         	*
- * Course: 	  CEN 3024C	     	         	*
- * Purpose:	  MCMS       			     	*
- * Date:	  6 / 8 /2024			     	*
- ********************************************
- * Class Function:
- * Song object class as far as function goes this merely houses every aspect of a song.
- * A song has a title, album, artist, id, genre, and score.
- * This is also used for display methods.
+/**
+ * Song --- Song object class as far as function goes this merely houses every aspect of a song. A song has a title, album, artist, id, genre, and score.
  *
+ * @author Bryan Mellado A.
+ * @version update-javadoc
+ * @since	  7 / 17 /2024
  */
-class Song {
+public class Song {
     //Fields
     private int identification;
     private String title;
@@ -19,6 +14,16 @@ class Song {
     private String genre;
     private float songScore;
 
+    /**
+     * Full arg constructor of Song.
+     *
+     * @param identification ID of the song.
+     * @param title          Title of the song.
+     * @param album          Album from which the song originates.
+     * @param artistName     Name of the artist of the song.
+     * @param genre          Genre of the song.
+     * @param songScore      User's Personal Score of the song.
+     */
     public Song(int identification, String title, String album, String artistName, String genre, float songScore) {
         this.identification = identification;
         this.title = title;
@@ -29,107 +34,96 @@ class Song {
     }
 
 
-    /*
-       Name: getIdentification
-       Explanation: get value for Identification
-       Arguments: none
-       Return Values: int
-        */
+    /**
+     * Gets the ID int value of the song
+     *
+     * @return int ID of the song.
+     */
     public int getIdentification() {
         return identification;
     }
 
-
-    /*
-  Name: setIdentification
-  Explanation: set value for Identification
-  Arguments: int newId
-  Return Values: void
-   */
-    public void setIdentification(int newId) {
-        this.identification = newId;
+    /**
+     * Sets int value for ID of the song.
+     *
+     * @param identification New ID to set.
+     */
+    public void setIdentification(int identification) {
+        this.identification = identification;
     }
 
 
-    /*
-       Name: getTitle
-       Explanation: get value for Title
-       Arguments: none
-       Return Values: String
-        */
+    /**
+     * Gets the title String value of the song.
+     *
+     * @return String The Title of the song.
+     */
     public String getTitle() {
         return title;
     }
 
 
-    /*
-  Name: setTitle
-  Explanation: set value for Title
-  Arguments: String title
-  Return Values: void
-   */
+    /**
+     * Sets String value for title of the song.
+     *
+     * @param title New title to set.
+     */
     public void setTitle(String title) {
         this.title = title;
     }
 
-    /*
-       Name: getAlbum
-       Explanation: get value for Album
-       Arguments: none
-       Return Values: String
-        */
+    /**
+     * Gets the album String value of the song.
+     *
+     * @return String Album from which the song originates.
+     */
     public String getAlbum() {
         return album;
     }
 
-    /*
-  Name: setAlbum
-  Explanation: set value for Album
-  Arguments: String album
-  Return Values: void
-   */
+    /**
+     * Sets String value for album of the song.
+     *
+     * @param album New album to set.
+     */
     public void setAlbum(String album) {
         this.album = album;
     }
 
 
-    /*
-    Name: getArtist
-    Explanation: get value for Artist
-    Arguments: none
-    Return Values: Artist
+    /**
+     * Gets the artist Artist value of the song.
+     *
+     * @return artist Artist that created the song.
      */
     public Artist getArtist() {
         return artist;
     }
 
-    /*
-   Name: setArtist
-   Explanation: set value for Artist
-   Arguments: Artist artist
-   Return Values: void
-    */
+    /**
+     * Sets Artist value for artist of the song.
+     *
+     * @param artist New artist to set.
+     */
     public void setArtist(Artist artist) {
         this.artist = artist;
     }
 
 
-    /*
-    Name: getSongScore
-    Explanation: get value for SongScore
-    Arguments: none
-    Return Values: float
+    /**
+     * Gets the song score float value of the song.
+     *
+     * @return float User's Personal Score of the song.
      */
     public float getSongScore() {
         return songScore;
     }
 
 
-    /*
-    Name: setSongScore
-    Explanation: set value for Score
-    Arguments: float songScore
-    Return Values: void
+    /**
+     * Sets float value for score of the song.
+     *
+     * @param songScore New song score to set.
      */
     public void setSongScore(float songScore) {
         this.songScore = songScore;
@@ -137,43 +131,36 @@ class Song {
 
 
 
-    /*
-    Name: getGenre
-    Explanation: get value for genre
-    Arguments: none
-    Return Values: String
+    /**
+     * Gets the genre String value of the song.
+     *
+     * @return String Genre of the song.
      */
     public String getGenre() {
         return genre;
     }
 
 
-
-    /*
-    Name: setGenre
-    Explanation: set value for genre
-    Arguments: String genre
-    Return Values: void
+    /**
+     * Sets String value for genre of the song.
+     *
+     * @param genre New genre to set.
      */
     public void setGenre(String genre) {
         this.genre = genre;
     }
 
 
-
-    /*
-    Name: toString
-    Explanation: toString()
-    Arguments: none
-    Return Values: String
+    /**
+     * Returns a string of the song object in a particular format.
+     *
+     * @return String This is to display the song object in the following format: "Song: [ID=%s, Title=%s, Album=%s, Artist=%s, Genre=%s, Score=%.2f]"
      */
     public String toString() {
 
         return String.format("Song: [ID=%s, Title=%s, Album=%s, Artist=%s, Genre=%s, Score=%.2f]",
                 identification, title, album, artist, genre, songScore);
-    }
-//end method toString
-
+    }//end method toString
 
 
 }//end class Song

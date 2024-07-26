@@ -1,18 +1,3 @@
-/********************************************
- * Name: 	  Bryan Mellado	  	         	*
- * Course: 	  CEN 3024C	     	         	*
- * Purpose:	  MCMS       			     	*
- * Date:	  6 / 8 /2024			     	*
- ********************************************
- * Class Function:
- * This class houses every function when accounting for multiple songs, it accounts for duplicate IDs.
- * Removing songs based on either ID or title,
- * Updating song scores that are housed in the catalog using ID,
- * Displaying songs in descending order based on each individual song score,
- * there is also an additional action in that you can filter your catalog by either author or album name,
- * and of course Adding Songs.
- * Additionally, there are many methods for display which were all created for a specific purpose behind them.
- */
 import javax.swing.*;
 import java.awt.*;
 import java.sql.Connection;
@@ -21,49 +6,47 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.regex.Pattern;
 
-class Catalog {
+
+/**
+ * Catalog ---
+ * This class houses every function when accounting for multiple songs.
+ * Adding songs from an established connected database.
+ * Removing songs based on either ID or title,
+ * Updating song scores that are housed in the catalog using ID,
+ * Displaying songs in descending order based on each individual song score,
+ * A custom action that you can use to filter your catalog by either author or album name.
+ * All while presenting lasting changes to the mySQL database that houses all of these song objects when the appropriate action/function is taken.
+ * -----------
+ * @author Bryan Mellado A.
+ * @version update-javadoc
+ * @since 7 / 17 /2024
+ */
+public class Catalog {
     //Fields
     private ArrayList<Song> songs;
-    // There is no longer any point to anything having to do with
-    // usedIds because validating objects is no longer needed since all objects are obtained from a database that already
-    // possesses all necessary constraints, the only thing my program is doing at this point is just retrieving them.
-    //private Set<Integer> usedIds;
 
 
-    /*
-    Name: Catalog()
-    Explanation:
-    Constructor initializes songs and usedIds
-    Arguments: None
-    Return Values: Not even Void
+    /**
+     * Constructor initializes songs arrayList
      */
     public Catalog() {
         songs = new ArrayList<>();
-        //usedIds = new HashSet<>();
     }
 
+
+    /**
+     * Gets the list of songs in the arrayList
+     *
+     * @return songs ArrayList containing songs.
+     */
     public ArrayList<Song> getSongs() {
         return songs;
     }
 
-    /*
-    public Set<Integer> getUsedIds() {
-        return usedIds;
-    }
-     */
 
-
-    /*
-    Name: filterByArtist
-    Explanation:
-    Scanner created, program prompts user for how they would like songs to be displayed,
-    intakes user input via filterChoice which is trimmed to remove spaces, and set to lowercase to account for case-sensitivity.
-    if its 'artist', the program prompts further for artist name then calls and passes it on to the filterByArist method.
-    if its 'album', the program prompts further for album name then calls and passes it on to the filterByAlbum method.
-    if its 'all', the program calls displayUnfiltered method.
-    otherwise, the user didn't input any of these choices and will be returned to menu.
-    Arguments: String artistName
-    Return Values: void
+    /**
+     * The user is prompted from a JOptionPane option dialog where the options can be clearly seen in the options String[].
+     * The switch case is used to take account for any interactions the user may have at this point of the program including canceling via closing the window or cancel.
      */
     public void askForDisplay() {
 
@@ -100,15 +83,13 @@ class Catalog {
     }//end method askForDisplay
 
 
-    /*
-    Name: filterByArtist
-    Explanation:
-    Passed a string called artistName which the user inputted from the askForDisplay method.
-    Initializes an arrayList, filteredSongs which the runs a for loop looking at every song's album name in lowercase matching the user's input
-    adding every song it finds to the filteredSongs array and then calling the displayRankings method and passing its,
-    filtered songs from the arrayList, its filter type, and the name of the input that the user inputted during askForDisplay.
-    Arguments: String artistName
-    Return Values: void
+
+    /**
+     * Initializes an arrayList, filteredSongs which the runs a for loop looking at every song's album name in lowercase matching the user's input
+     * adding every song it finds to the filteredSongs array and then calling the displayRankings method and passing its,
+     * filtered songs from the arrayList, its filter type, and the name of the input that the user inputted during askForDisplay.
+     *
+     * @param artistName Passed a string called artistName which the user inputted from the askForDisplay method.
      */
     private void filterByArtist(String artistName) {
         ArrayList<Song> filteredSongs = new ArrayList<>();
@@ -123,15 +104,12 @@ class Catalog {
     }//end method filterByArtist
 
 
-    /*
-    Name: filterByAlbum
-    Explanation:
-    Passed a string called albumName which the user inputted from the askForDisplay method.
-    Initializes an arrayList, filteredSongs which the runs a for loop looking at every song's album name in lowercase matching the user's input
-    adding every song it finds to the filteredSongs array and then calling the displayRankings method and passing its,
-    filtered songs from the arrayList, its filter type, and the name of the input that the user inputted during askForDisplay.
-    Arguments: String albumName
-    Return Values: void
+    /**
+     * Initializes an arrayList, filteredSongs which the runs a for loop looking at every song's album name in lowercase matching the user's input
+     * adding every song it finds to the filteredSongs array and then calling the displayRankings method and passing its,
+     * filtered songs from the arrayList, its filter type, and the name of the input that the user inputted during askForDisplay.
+     *
+     * @param albumName Passed a string called albumName which the user inputted from the askForDisplay method.
      */
     private void filterByAlbum(String albumName) {
         ArrayList<Song> filteredSongs = new ArrayList<>();
@@ -146,33 +124,25 @@ class Catalog {
     }//end method filterByAlbum
 
 
-    /*
-    Name: displayUnfiltered
-    Explanation:
-    Immediately moves on by calling the displayRankings giving it the songs arrayList, the filter type all, and no filter name.
-    This one probably could've just been in the askForDisplay method but making a method for isn't bad either. Ultimately, harmless.
-    Arguments: none
-    Return Values: void
+    /**
+     * Immediately moves on by calling the displayRankings giving it the songs arrayList, the filter type all, and no filter name.
      */
     public void displayUnfiltered() {
         displayRankings(songs, "all", "");
     }//end method displayUnfiltered
 
 
-    /*
-    Name: displayRankings
-    Explanation:
-    First, it checks if the songs arrayList is empty, one retrospective thought, checking filtering by type all isn't really required because
-    it's already checked at the menu but, so be it, a bit of bloat but ultimately harmless.
-    Anyway if the songs arrayList isn't empty, then it will sort the songs by songScore in descending order.
-    Then it keep try of int rank and float previous score for two reasons, one to display rank but, also to display rank properly
-    as some songs may share the same rank, also previous score is set to max just so that there is no way that the user could possibly input a larger float score.
-    It will also only update rank if the current song's score is lower.
-    Also, rank formatted as 000000 just so that the UI looks alright.
-    Arguments: ArrayList<Song> songs, String filterType, String filterName
-    Return Values: void
+    /**
+     * First, it checks if the songs arrayList is empty, if the songs arrayList isn't empty, then it will sort the songs by songScore in descending order.
+     * Then it keep try of int rank and float previous score for two reasons, one to display rank but, also to display rank properly
+     * as some songs may share the same rank, also previous score is set to max just so that there is no way that the user could possibly input a larger float score.
+     * It will also only update rank if the current song's score is lower.
+     * Also, rank formatted as 000000. (E.g. 000001, 000002, 000003,...)
+     *
+     * @param songs Passed songs arrayList which may or may not be altered based on filters.
+     * @param filterType Passed filter type from either of the three options of askForDisplay.
+     * @param filterName Passed user input from either artistName or albumName of askForDisplay.
      */
-
     private void displayRankings(ArrayList<Song> songs, String filterType, String filterName) {
         if (songs.isEmpty()) {
             if (filterType.equals("all")) {
@@ -245,27 +215,23 @@ class Catalog {
     }//end method displayRankings
 
 
-    /*
-    Name: removeSong
-    Explanation:
-    We have a collection of songs, an iterator is needed to retrieve the next song in the catalog to
-    check if the passed user input variable songId matches any of the IDs of a song object in the arrayList of songs.
-    Creates the 'found' variable, 'found' of the boolean data type to keep track of whether the users inputted id was actually able to locate the song.
-    If it isn't successful, the user will be told so, if the iterator successfully matches the songId with a Books Identification
-    it is removed, the 'found' variable is changed to true, as well as the deleted song's id is removed from the hashset of usedIds.
-
-    On top of all that, before any of this actually runs, it will start by first asking the user which attribute they would like to use in order to remove a song from the catalog.
-    If the user inputs something valid (id or title), then one of two things will happen from here:
-    Either it will do what I have already stated about the song's ID or it will check through every song object, looking at every song title in lowercase.
-    If it finds nothing, then that's it; if it finds something, 'found' is switched to true, then increase a count, which is just used to count how many songs contain that title.
-    The program will then display all songs with that title if there are multiple of them. If found is switched to true from here, it will check the count;
-    if count is greater than 1, the program will ask the user to further specify the song's ID, which follows pretty much exactly the same way that the removal of the song ID worked.
-    Otherwise, if the count is just one, then the program will immediately remove that song from the catalog,
-    following the exact same steps as song ID removal but instead display the title that was removed rather than ID.
-
-
-    Arguments: none
-    Return Values: Void
+    /**
+     * We have a collection of songs, an iterator is needed to retrieve the next song in the catalog to
+     * check if the passed user input variable songId matches any of the IDs of a song object in the arrayList of songs.
+     * 'found' of the boolean data type is used to keep track of whether the users inputted id was actually able to locate the song.
+     * If it isn't successful, the user will be told so, if the iterator successfully matches the songId with a Songs Identification it is removed.
+     * <p>
+     * On top of all that, before any of this actually runs, it will start by first asking the user which attribute they would like to use in order to remove a song from the catalog.
+     * The user chooses between ID, Title, X button and Cancel.
+     * Either it will do what I have already stated about the song's ID, or it will check through every song object, looking at every song title in lowercase.
+     * If it finds nothing, then it will tell the user such and return to menu.
+     * if it finds something, 'found' is switched to true, then increase a count, which is just used to count how many songs contain that title.
+     * The program will then display all songs with that title if there are multiple of them. If found is switched to true from here, it will check the count;
+     * if count is greater than 1, the program will ask the user to further specify the song's ID, which follows pretty much exactly the same way that the removal of the song ID worked.
+     * Otherwise, if the count is just one, then the program will immediately remove that song from the catalog,
+     * following the exact same steps as song ID removal but instead display the title that was removed rather than ID.
+     *
+     * @param connection The connection to the MCMS Database to create lasting changes of removed songs.
      */
     public void removeSong(Connection connection) {
 
@@ -290,7 +256,6 @@ class Catalog {
                                 if (song.getIdentification() == songId) {
                                     iterator.remove();
                                     found = true;
-                                    //usedIds.remove(songId);
                                     try {
                                         String deleteQuery = "DELETE FROM music_catalog.Songs WHERE songId = ?";
                                         PreparedStatement preassembled = connection.prepareStatement(deleteQuery);
@@ -355,7 +320,6 @@ class Catalog {
                                             Song song = iterator.next();
                                             if (song.getIdentification() == songId && song.getTitle().equalsIgnoreCase(removeSong)) {
                                                 iterator.remove();
-                                                //usedIds.remove(songId);
                                                 try {
                                                     String deleteQuery = "DELETE FROM music_catalog.Songs WHERE songId = ?";
                                                     PreparedStatement preassembled = connection.prepareStatement(deleteQuery);
@@ -386,7 +350,6 @@ class Catalog {
                                     Song song = iterator.next();
                                     if (song.getTitle().equalsIgnoreCase(removeSong)) {
                                         iterator.remove();
-                                        //usedIds.remove(song.getIdentification());
                                         try {
                                             String deleteQuery = "DELETE FROM music_catalog.Songs WHERE songTitle = ?";
                                             PreparedStatement preassembled = connection.prepareStatement(deleteQuery);
@@ -422,17 +385,16 @@ class Catalog {
     }//end method removeSong
 
 
-    /*
-    Name: updateUserScore
-    Explanation:
-    creates a boolean called 'found' set to false, initializes a scanner, iterates through songs looking for user input songID
-    if it finds it 'found' is switched to true, and the program asks the user for what the song's new score should be,
-    creating a new float called newScore which is then validated to make sure it's a float variable and that the range is between 0-5.
-    All goes well, it will tell the user the score has been updated and the menu & catalog will come back showing the update.
-    If it can't find the songId in songs then, error and back to the menu.
-    Arguments: int songId
-    Return Values: void
-
+    /**
+     * Iterates through songs looking for user input songID obtained from JOptionPane.
+     * if it finds it 'found' is switched to true, and the program asks the user for what the song's new score should be,
+     * creating a new float called newScore which is then validated to make sure it's a float variable and that the range is between 0-5.
+     * Along with making sure that it only goes accepts scores out to the hundredths place.
+     * All goes well, it will tell the user the score has been updated and these changes shall also be made to the mySQL database as well based on the connection to said database.
+     * If it can't find the songId in songs then, the user will be told such via an error message and be sent back to the menu.
+     *
+     * @param songId     The ID of the song which will attempted to be found in the songs arrayList.
+     * @param connection The connection to the MCMS Database to create lasting changes of songScore.
      */
     public void updateUserScore(int songId, Connection connection) {
         Iterator<Song> iterator = songs.iterator();
@@ -491,37 +453,14 @@ class Catalog {
     }//end method updateUserScore
 
 
-    /*
-    Name: addSong
-    Explanation:
-    Sets the id variable for a song object.
-    Adds that book object to the songs arrayList.
-    Adds id variable to a hashset that keeps track of every new ID and tells the user that the implementation of this song was successful and includes the ID of that song.
-    Arguments: Object song and wrapper class Integer
-    Return Values: Void
+    /**
+     * Adds song object to the songs arrayList.
+     *
+     * @param song The song object that will be added to the arrayList.
      */
     public void addSong(Song song) {
-        //song.setIdentification(newID);
         songs.add(song);
-        //usedIds.add(newID);
     }//end method addSong
-
-
-    /*
-    Name: checkNewId
-    Explanation:
-    Checks the hashset usedIds for any duplicate IDs
-    Arguments: int
-    Return Values: boolean
-     */
-
-    /*
-    public boolean checkNewId(int id) {
-        return !usedIds.contains(id);
-    }
-
-
-     */
 
 
 }//end class Catalog
